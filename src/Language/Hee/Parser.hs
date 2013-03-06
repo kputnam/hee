@@ -26,12 +26,7 @@ import Data.Attoparsec.Text hiding (parseOnly, Partial)
 data ParseError a
   = Partial a Text
   | Invalid String Text
-  deriving (Show)
-
-instance (Eq a) => Eq (ParseError a) where
-  (Partial a t) == (Partial a' t') = a == a' && t == t'
-  (Invalid s t) == (Invalid s' t') = s == s' && t == t'
-  _             == _               = False
+  deriving (Show, Eq)
 
 class Parsable a where
   parser :: Parser a
