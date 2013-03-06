@@ -1,9 +1,13 @@
-both   = dup [swap [unquote] dip] dip unquote
-***    : Arrow a => S (a b c) (a x y) → S (a (Pair b x) (Pair c y))
-pair   : S a b → S (Pair a b)
-unpair : S (Pair a b) → S a b
+both
+  " ***    : Arrow a => S (a b c) (a x y) → S (a (Pair b x) (Pair c y))
+  " pair   : S a b → S (Pair a b)
+  " unpair : S (Pair a b) → S a b
+  "
+  = dup [swap [unquote] dip] dip unquote
 
 square
+  : S num → S num
+  "
   " 21 square
   " 441
   "
@@ -13,14 +17,14 @@ square
   " 3 square square
   " 81
   "
-  : S num → S num
   = dup *
 
 sum-of-squares
+  : S num num → num
+  "
   " 3 4 sum-of-squares
   " 35
   "
-  : S num num → num
   = [square] both +
 
 f : S num → num
