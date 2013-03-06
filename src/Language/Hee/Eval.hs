@@ -16,6 +16,7 @@ import Control.Monad.Error
 
 import Language.Hee.Pretty (renderString)
 import Language.Hee.Syntax hiding (Stack)
+import Language.Hee.Builtin
 
 data Value
   = VChar Char
@@ -58,17 +59,17 @@ mergeEnv = union
 
 defaultEnv :: Environment
 defaultEnv = fromList
-  [("u",    ECompose (EName "dup") (EName "unquote"))
+  [("u",    ECompose (EBuiltin BDup) (EBuiltin BUnquote))
   ,("both", ECompose
-              (EName "dup")
+              (EBuiltin BDup)
               (ECompose
                 (EQuote
                   (ECompose
-                    (EName "swap")
+                    (EBuiltin BSwap)
                     (ECompose
-                      (EQuote (EName "unquote"))
-                      (EName "dip"))))
-                (ECompose (EName "dip") (EName "unquote"))))]
+                      (EQuote (EBuiltin BUnquote))
+                      (EBuiltin BDip))))
+                (ECompose (EBuiltin BDip) (EBuiltin BUnquote))))]
 
 
 -- Evaluation
@@ -94,43 +95,43 @@ evalExpr (EQuote e)        = modify (VQuote e:)
 evalExpr (ELiteral e)      = evalLit e
 
 -- Stack operators
-evalExpr (EName "id")      = evalId
-evalExpr (EName "pop")     = evalPop
-evalExpr (EName "dup")     = evalDup
-evalExpr (EName "dup2")    = evalDup2
-evalExpr (EName "dig")     = evalDig
-evalExpr (EName "swap")    = evalSwap
-evalExpr (EName "bury")    = evalBury
+evalExpr (EBuiltin BId)      = evalId
+evalExpr (EBuiltin BPop)     = evalPop
+evalExpr (EBuiltin BDup)     = evalDup
+evalExpr (EBuiltin BDup2)    = evalDup2
+evalExpr (EBuiltin BDig)     = evalDig
+evalExpr (EBuiltin BSwap)    = evalSwap
+evalExpr (EBuiltin BBury)    = evalBury
 
 -- Function operators
-evalExpr (EName "quote")   = evalQuote
-evalExpr (EName "compose") = evalCompose
-evalExpr (EName "unquote") = evalUnquote
-evalExpr (EName "dip")     = evalDip
+evalExpr (EBuiltin BQuote)   = evalQuote
+evalExpr (EBuiltin BCompose) = evalCompose
+evalExpr (EBuiltin BUnquote) = evalUnquote
+evalExpr (EBuiltin BDip)     = evalDip
 
 -- Numeric operators
-evalExpr (EName "+")       = evalOp (+)
-evalExpr (EName "-")       = evalOp (-)
-evalExpr (EName "*")       = evalOp (*)
-evalExpr (EName "/")       = evalFrac (/)
-evalExpr (EName "%")       = evalInt mod
-evalExpr (EName "//")      = evalInt div
-evalExpr (EName "^")       = evalExp
-evalExpr (EName "round")   = evalRound
+evalExpr (EBuiltin BAdd)     = evalOp (+)
+evalExpr (EBuiltin BSub)     = evalOp (-)
+evalExpr (EBuiltin BMul)     = evalOp (*)
+evalExpr (EBuiltin BDiv)     = evalFrac (/)
+evalExpr (EBuiltin BMod)     = evalInt mod
+evalExpr (EBuiltin BQuo)     = evalInt div
+evalExpr (EBuiltin BExp)     = evalExp
+evalExpr (EBuiltin BRound)   = evalRound
 
 -- Boolean operators
-evalExpr (EName "if")      = evalIf
-evalExpr (EName "not")     = evalNot
-evalExpr (EName "or")      = evalBool (||)
-evalExpr (EName "and")     = evalBool (&&)
+evalExpr (EBuiltin BIf)      = evalIf
+evalExpr (EBuiltin BNot)     = evalNot
+evalExpr (EBuiltin BOr)      = evalBool (||)
+evalExpr (EBuiltin BAnd)     = evalBool (&&)
 
 -- Comparison operators
-evalExpr (EName "==")      = evalEq  (==)
-evalExpr (EName "/=")      = evalEq  (/=)
-evalExpr (EName "<")       = evalOrd (<)
-evalExpr (EName ">")       = evalOrd (>)
-evalExpr (EName "<=")      = evalOrd (<=)
-evalExpr (EName ">=")      = evalOrd (>=)
+evalExpr (EBuiltin BEq)      = evalEq  (==)
+evalExpr (EBuiltin BNe)      = evalEq  (/=)
+evalExpr (EBuiltin BLt)      = evalOrd (<)
+evalExpr (EBuiltin BGt)      = evalOrd (>)
+evalExpr (EBuiltin BLte)     = evalOrd (<=)
+evalExpr (EBuiltin BGte)     = evalOrd (>=)
 evalExpr (EName name)
   = do env <- ask
        case lookup name env of

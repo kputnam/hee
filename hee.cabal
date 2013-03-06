@@ -51,6 +51,7 @@ library
   exposed-modules:
     Language.Hee.Eval
     Language.Hee.Syntax
+    Language.Hee.Builtin
     Language.Hee.Parser
     Language.Hee.Pretty
     Language.Hee.Substitute

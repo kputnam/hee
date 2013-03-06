@@ -13,6 +13,7 @@ module Language.Hee.Syntax
   ) where
 
 import Data.Text
+import Language.Hee.Builtin
 
 data Declaration
   = DNameBind Text (Maybe Text) (Maybe Text) Expression -- bind an expression to a name
@@ -21,6 +22,7 @@ data Declaration
 data Expression
   = EEmpty
   | EName Text
+  | EBuiltin Builtin
   | EQuote Expression
   | ELiteral Literal
   | ECompose Expression Expression
