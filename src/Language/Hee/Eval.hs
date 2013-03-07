@@ -8,6 +8,7 @@ module Language.Hee.Eval
 import Prelude hiding (lookup)
 import Data.Map hiding (map)
 import Data.Text (Text, append, pack)
+import Control.Applicative
 import Control.Monad.Identity
 import Control.Monad.Reader
 import Control.Monad.Writer
@@ -16,7 +17,7 @@ import Control.Monad.Error
 
 import Language.Hee.Pretty (renderString)
 import Language.Hee.Syntax hiding (Stack)
-import Language.Hee.Builtin
+import qualified Language.Hee.Builtin as B
 
 data Value
   = VChar Char
@@ -59,17 +60,17 @@ mergeEnv = union
 
 defaultEnv :: Environment
 defaultEnv = fromList
-  [("u",    ECompose (EBuiltin BDup) (EBuiltin BUnquote))
+  [("u",    ECompose (EBuiltin B.Dup) (EBuiltin B.Unquote))
   ,("both", ECompose
-              (EBuiltin BDup)
+              (EBuiltin B.Dup)
               (ECompose
                 (EQuote
                   (ECompose
-                    (EBuiltin BSwap)
+                    (EBuiltin B.Swap)
                     (ECompose
-                      (EQuote (EBuiltin BUnquote))
-                      (EBuiltin BDip))))
-                (ECompose (EBuiltin BDip) (EBuiltin BUnquote))))]
+                      (EQuote (EBuiltin B.Unquote))
+                      (EBuiltin B.Dip))))
+                (ECompose (EBuiltin B.Dip) (EBuiltin B.Unquote))))]
 
 
 -- Evaluation
@@ -95,46 +96,48 @@ evalExpr (EQuote e)        = modify (VQuote e:)
 evalExpr (ELiteral e)      = evalLit e
 
 -- Stack operators
-evalExpr (EBuiltin BId)      = evalId
-evalExpr (EBuiltin BPop)     = evalPop
-evalExpr (EBuiltin BDup)     = evalDup
-evalExpr (EBuiltin BDup2)    = evalDup2
-evalExpr (EBuiltin BDig)     = evalDig
-evalExpr (EBuiltin BSwap)    = evalSwap
-evalExpr (EBuiltin BBury)    = evalBury
+evalExpr (EBuiltin B.Id)      = evalId
+evalExpr (EBuiltin B.Pop)     = evalPop
+evalExpr (EBuiltin B.Dup)     = evalDup
+evalExpr (EBuiltin B.Dup2)    = evalDup2
+evalExpr (EBuiltin B.Dig)     = evalDig
+evalExpr (EBuiltin B.Swap)    = evalSwap
+evalExpr (EBuiltin B.Bury)    = evalBury
 
 -- Function operators
-evalExpr (EBuiltin BQuote)   = evalQuote
-evalExpr (EBuiltin BCompose) = evalCompose
-evalExpr (EBuiltin BUnquote) = evalUnquote
-evalExpr (EBuiltin BDip)     = evalDip
+evalExpr (EBuiltin B.Quote)   = evalQuote
+evalExpr (EBuiltin B.Compose) = evalCompose
+evalExpr (EBuiltin B.Unquote) = evalUnquote
+evalExpr (EBuiltin B.Dip)     = evalDip
 
 -- Numeric operators
-evalExpr (EBuiltin BAdd)     = evalOp (+)
-evalExpr (EBuiltin BSub)     = evalOp (-)
-evalExpr (EBuiltin BMul)     = evalOp (*)
-evalExpr (EBuiltin BDiv)     = evalFrac (/)
-evalExpr (EBuiltin BMod)     = evalInt mod
-evalExpr (EBuiltin BQuo)     = evalInt div
-evalExpr (EBuiltin BExp)     = evalExp
-evalExpr (EBuiltin BRound)   = evalRound
+evalExpr (EBuiltin B.Add)     = evalOp (+)
+evalExpr (EBuiltin B.Sub)     = evalOp (-)
+evalExpr (EBuiltin B.Mul)     = evalOp (*)
+evalExpr (EBuiltin B.Div)     = evalFrac (/)
+evalExpr (EBuiltin B.Mod)     = evalInt mod
+evalExpr (EBuiltin B.Quo)     = evalInt div
+evalExpr (EBuiltin B.Exp)     = evalExp
+evalExpr (EBuiltin B.Round)   = evalRound
 
 -- Boolean operators
-evalExpr (EBuiltin BIf)      = evalIf
-evalExpr (EBuiltin BNot)     = evalNot
-evalExpr (EBuiltin BOr)      = evalBool (||)
-evalExpr (EBuiltin BAnd)     = evalBool (&&)
+evalExpr (EBuiltin B.If)      = evalIf
+evalExpr (EBuiltin B.Not)     = evalNot
+evalExpr (EBuiltin B.Or)      = evalBool (||)
+evalExpr (EBuiltin B.And)     = evalBool (&&)
 
 -- Comparison operators
-evalExpr (EBuiltin BEq)      = evalEq  (==)
-evalExpr (EBuiltin BNe)      = evalEq  (/=)
-evalExpr (EBuiltin BLt)      = evalOrd (<)
-evalExpr (EBuiltin BGt)      = evalOrd (>)
-evalExpr (EBuiltin BLte)     = evalOrd (<=)
-evalExpr (EBuiltin BGte)     = evalOrd (>=)
+evalExpr (EBuiltin B.Eq)      = evalEq  (==)
+evalExpr (EBuiltin B.Ne)      = evalEq  (/=)
+evalExpr (EBuiltin B.Lt)      = evalOrd (<)
+evalExpr (EBuiltin B.Gt)      = evalOrd (>)
+evalExpr (EBuiltin B.Lte)     = evalOrd (<=)
+evalExpr (EBuiltin B.Gte)     = evalOrd (>=)
+
 evalExpr (EName name)
   = do env <- ask
-       case lookup name env of
+       case lookup name env
+        <|> EBuiltin <$> B.fromName name of
          Just expr -> evalExpr expr
          Nothing   -> throwError (append "undefined: " name)
 evalExpr e = throwError (pack (show e))

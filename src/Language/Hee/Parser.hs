@@ -15,7 +15,6 @@ module Language.Hee.Parser
   ) where
 
 import Language.Hee.Syntax
-import Language.Hee.Builtin
 
 import Prelude hiding (takeWhile, length, unlines)
 import Control.Applicative hiding (empty)
@@ -170,11 +169,7 @@ parseNameId
 
 parseName :: Parser Expression
 parseName
-  = parseNameId >>= pure . either EName EBuiltin . lookupName
-  where
-    -- TODO: This should happen at a later phase!
-    lookupName :: Text -> Either Text Builtin
-    lookupName x = maybe (Left x) Right $ fromName x
+  = EName <$> parseNameId
 
 parseQuote :: Parser Expression
 parseQuote

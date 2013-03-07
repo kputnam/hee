@@ -10,39 +10,39 @@ import Data.Text (Text)
 
 data Builtin
   -- Stack operators
-  = BId
-  | BPop
-  | BDup
-  | BDup2
-  | BDig
-  | BSwap
-  | BBury
+  = Id
+  | Pop
+  | Dup
+  | Dup2
+  | Dig
+  | Swap
+  | Bury
   -- Function operators
-  | BQuote
-  | BCompose
-  | BUnquote
-  | BDip
+  | Quote
+  | Compose
+  | Unquote
+  | Dip
   -- Numeric operators
-  | BAdd
-  | BSub
-  | BMul
-  | BDiv
-  | BMod
-  | BQuo
-  | BExp
-  | BRound
+  | Add
+  | Sub
+  | Mul
+  | Div
+  | Mod
+  | Quo
+  | Exp
+  | Round
   -- Boolean operators
-  | BIf
-  | BNot
-  | BOr
-  | BAnd
+  | If
+  | Not
+  | Or
+  | And
   -- Comparison operators
-  | BNe
-  | BEq
-  | BLt
-  | BGt
-  | BLte
-  | BGte
+  | Ne
+  | Eq
+  | Lt
+  | Gt
+  | Lte
+  | Gte
   deriving (Eq, Show)
 
 fromName :: Text -> Maybe Builtin
@@ -50,32 +50,32 @@ fromName = flip M.lookup nameMap
 
 nameMap :: M.Map Text Builtin
 nameMap = M.fromList
-  [ ("id"       , BId)
-  , ("pop"      , BPop)
-  , ("dup"      , BDup)
-  , ("dup2"     , BDup2)
-  , ("dig"      , BDig)
-  , ("swap"     , BSwap)
-  , ("bury"     , BBury)
-  , ("quote"    , BQuote)
-  , ("compose"  , BCompose)
-  , ("unquote"  , BUnquote)
-  , ("dip"      , BDip)
-  , ("+"        , BAdd)
-  , ("-"        , BSub)
-  , ("*"        , BMul)
-  , ("/"        , BDiv)
-  , ("%"        , BMod)
-  , ("//"       , BQuo)
-  , ("^"        , BExp)
-  , ("round"    , BRound)
-  , ("if"       , BIf)
-  , ("not"      , BNot)
-  , ("or"       , BOr)
-  , ("and"      , BAnd)
-  , ("/="       , BNe)
-  , ("=="       , BEq)
-  , ("<"        , BLt)
-  , (">"        , BGt)
-  , ("<="       , BLte)
-  , (">="       , BGte) ]
+  [ ("id"       , Id)
+  , ("pop"      , Pop)
+  , ("dup"      , Dup)
+  , ("dup2"     , Dup2)
+  , ("dig"      , Dig)
+  , ("swap"     , Swap)
+  , ("bury"     , Bury)
+  , ("quote"    , Quote)
+  , ("compose"  , Compose)
+  , ("unquote"  , Unquote)
+  , ("dip"      , Dip)
+  , ("+"        , Add)
+  , ("-"        , Sub)
+  , ("*"        , Mul)
+  , ("/"        , Div)
+  , ("%"        , Mod)
+  , ("//"       , Quo)
+  , ("^"        , Exp)
+  , ("round"    , Round)
+  , ("if"       , If)
+  , ("not"      , Not)
+  , ("or"       , Or)
+  , ("and"      , And)
+  , ("/="       , Ne)
+  , ("=="       , Eq)
+  , ("<"        , Lt)
+  , (">"        , Gt)
+  , ("<="       , Lte)
+  , (">="       , Gte) ]
