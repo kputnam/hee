@@ -6,7 +6,7 @@ module Language.Hee.Eval
   ) where
 
 import Prelude hiding (lookup)
-import Data.Map hiding (map)
+import qualified Data.Map as M
 import Data.Text (Text, append, pack)
 import Control.Applicative
 import Control.Monad.Identity
@@ -50,28 +50,30 @@ defaultStack :: Stack
 defaultStack = []
 
 type Environment
-  = Map Text Expression
+  = M.Map Text Expression
 
 buildEnv :: [Declaration] -> Environment
-buildEnv = fromList . map (\(DNameBind name _ _ expr) -> (name, expr))
+buildEnv = M.fromList . map (\(DNameBind name _ _ expr) -> (name, expr))
 
 mergeEnv :: Environment -> Environment -> Environment
-mergeEnv = union
+mergeEnv = M.union
 
 defaultEnv :: Environment
-defaultEnv = fromList
-  [("u",    ECompose (EBuiltin B.Dup) (EBuiltin B.Unquote))
-  ,("both", ECompose
-              (EBuiltin B.Dup)
-              (ECompose
-                (EQuote
-                  (ECompose
-                    (EBuiltin B.Swap)
-                    (ECompose
-                      (EQuote (EBuiltin B.Unquote))
-                      (EBuiltin B.Dip))))
-                (ECompose (EBuiltin B.Dip) (EBuiltin B.Unquote))))]
-
+defaultEnv = builtins `M.union` extras
+  where
+    builtins = M.map EBuiltin B.nameMap
+    extras   = M.fromList
+                 [("u",    ECompose (EBuiltin B.Dup) (EBuiltin B.Unquote))
+                 ,("both", ECompose
+                             (EBuiltin B.Dup)
+                             (ECompose
+                               (EQuote
+                                 (ECompose
+                                   (EBuiltin B.Swap)
+                                   (ECompose
+                                     (EQuote (EBuiltin B.Unquote))
+                                     (EBuiltin B.Dip))))
+                               (ECompose (EBuiltin B.Dip) (EBuiltin B.Unquote))))]
 
 -- Evaluation
 --------------------------------------------------------------------------------
@@ -136,8 +138,7 @@ evalExpr (EBuiltin B.Gte)     = evalOrd (>=)
 
 evalExpr (EName name)
   = do env <- ask
-       case lookup name env
-        <|> EBuiltin <$> B.fromName name of
+       case M.lookup name env of
          Just expr -> evalExpr expr
          Nothing   -> throwError (append "undefined: " name)
 evalExpr e = throwError (pack (show e))

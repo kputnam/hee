@@ -3,6 +3,7 @@
 module Language.Hee.Builtin
   ( Builtin(..)
   , fromName
+  , nameMap
   ) where
 
 import qualified Data.Map as M
