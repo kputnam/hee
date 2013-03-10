@@ -8,7 +8,6 @@ module Language.Hee.Eval
 import Prelude hiding (lookup)
 import qualified Data.Map as M
 import Data.Text (Text, append, pack)
-import Control.Applicative
 import Control.Monad.Identity
 import Control.Monad.Reader
 import Control.Monad.Writer
@@ -56,7 +55,7 @@ buildEnv :: [Declaration] -> Environment
 buildEnv = M.fromList . map (\(DNameBind name _ _ expr) -> (name, expr))
 
 mergeEnv :: Environment -> Environment -> Environment
-mergeEnv = M.union
+mergeEnv = flip M.union
 
 defaultEnv :: Environment
 defaultEnv = builtins `M.union` extras
