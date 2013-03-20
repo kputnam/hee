@@ -18,18 +18,18 @@ The preliminary type system is not usable. Several issues must be addressed
 before certain simple terms can be correctly typed. Some terms that pose
 interesting problems are:
 
-* `dup unquote`, the U-combinator, requires recursive types. This permits
-  general recursion.
-
 * `dup compose`, because `A (B → B) → A (B → B)` is not sufficiently general.
   This is the type inferred by HM for the analogous lambda calculus expression
-  `λx.x x`. We should be able to derive a principle type for it that admits
-  expressions like `[+] dup compose` and `[33] dup compose`.
+  `λf x. f (f x)`. We should be able to derive a principle type for it that
+  admits expressions like `[+] dup compose` and `[33] dup compose`.
 
 * `dup` itself which seems to break concatenativity without impredicative
-  polymorphism. That is, `[id] [id]` has the type `(∀ T . T → T) (∀ U . U → U)`,
+  polymorphism. That is, `[id] [id]` has the type `(∀T. T → T) (∀U. U → U)`,
   so we should assign `[id] dup` the same type. Without impredicative
-  polymorphism we will derive `∀ T . (T → T) (T → T)` instead.
+  polymorphism we will derive `∀T. (T → T) (T → T)` instead.
+
+* `dup unquote`, the U-combinator, requires recursive types. This permits
+  general recursion.
 
 ### Current
 
