@@ -12,32 +12,6 @@ synopsis:       Functional and concatenative programming language
 description:
   Functional and concatenative programming language
 
-executable hee-parse
-  main-is: parse.hs
-
-  hs-source-dirs: bin
-  default-language: Haskell2010
-  ghc-options: -Wall
-
-  build-depends:
-    hee,
-    base >= 3 && < 5,
-    text >= 0.11.2.3,
-    attoparsec >= 0.10.2.0
-
-executable hee-eval
-  main-is: eval.hs
-
-  ghc-options: -Wall
-  hs-source-dirs: bin
-  default-language: Haskell2010
-
-  build-depends:
-    hee,
-    base >= 3 && <5,
-    text >= 0.11.2.3,
-    attoparsec >= 0.10.2.0
-
 library
   ghc-options: -Wall
   hs-source-dirs: src
@@ -52,13 +26,8 @@ library
     containers >= 0.4.0.0
 
   exposed-modules:
-    Language.Hee.Eval
     Language.Hee.Syntax
-    Language.Hee.Builtin
     Language.Hee.Parser
-    Language.Hee.Pretty
-    Language.Hee.Substitute
-    Language.Hee.Unify
 
 test-suite main
   type: exitcode-stdio-1.0
