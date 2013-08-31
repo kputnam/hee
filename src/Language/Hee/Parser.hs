@@ -2,6 +2,7 @@
 
 module Language.Hee.Parser
   ( parseExpr
+  , parseFile
   ) where
 
 import Language.Hee.Syntax
@@ -13,33 +14,44 @@ import Data.Char (isOctDigit, isDigit, chr, ord)
 import Data.Text (Text, cons, pack, foldl', length)
 import Data.Attoparsec.Text hiding (parse)
 
-parseExpr :: Parser (Expression Text)
+parseFile :: Parser (Bind Text)
+parseFile
+  = Rec <$> many1 parseBind
+
+parseBind :: Parser (Text, Expr Text)
+parseBind
+  = (,) <$> name <*> body
+  where
+    name = optional flushLine  *> parseNameId
+    body = indentLine *> "= " .*> parseExpr
+
+parseExpr :: Parser (Expr Text)
 parseExpr
   = pruneExpr <$> (skipSpace *> loop)
   where
-    loop = ExCompose <$> expr <*> (indentLine *> loop <|> parseEmpty)
+    loop = Compose <$> expr <*> (indentLine *> loop <|> parseEmpty)
     expr = parseQuote
        <|> parseLiteral
        <|> parseName
        <|> parseEmpty
 
-pruneExpr :: Expression a -> Expression a
-pruneExpr (ExQuote e)     = ExQuote (pruneExpr e)
-pruneExpr (ExCompose a b) = compose (pruneExpr a) (pruneExpr b)
+pruneExpr :: Expr a -> Expr a
+pruneExpr (Quote e)     = Quote (pruneExpr e)
+pruneExpr (Compose a b) = compose (pruneExpr a) (pruneExpr b)
   where
-    compose m ExEmpty         = m
-    compose ExEmpty n         = n
-    compose (ExCompose m n) o = ExCompose m (ExCompose n o)
-    compose m n               = ExCompose m n
+    compose m Empty         = m
+    compose Empty n         = n
+    compose (Compose m n) o = Compose m (Compose n o)
+    compose m n             = Compose m n
 pruneExpr e               = e
 
-parseEmpty :: Parser (Expression Text)
+parseEmpty :: Parser (Expr Text)
 parseEmpty
-  = pure ExEmpty
+  = pure Empty
 
-parseName :: Parser (Expression Text)
+parseName :: Parser (Expr Text)
 parseName
-  = ExName <$> parseNameId
+  = Name <$> parseNameId
 
 parseNameId :: Parser Text
 parseNameId
@@ -48,40 +60,39 @@ parseNameId
     startChar = notInClass " \t\r\n\f\v[]\"'"
     otherChar = notInClass " \t\r\n\f\v[]"
 
-parseQuote :: Parser (Expression Text)
+parseQuote :: Parser (Expr Text)
 parseQuote
   = parenthesized open inside close
   where
     open   = char '[' *> skipSpace
     close  = skipSpace <* char ']'
-    inside = ExQuote <$> parseExpr
+    inside = Quote <$> parseExpr
 
-parseLiteral :: Parser (Expression Text)
+parseLiteral :: Parser (Expr Text)
 parseLiteral
-  = ExLiteral <$> literal
+  = Literal <$> literal
   where
-    literal = parseChar
-          <|> parseString
-          <|> parseFloat
-          <|> parseInteger
-          <|> parseBool
+    literal = parseChr
+          <|> parseStr
+          <|> parseRat
+          <|> parseInt
 
-parseChar :: Parser Literal
-parseChar
-  = LiChar <$> (delim *> (escapedChar <|> anyChar))
+parseChr :: Parser Literal
+parseChr
+  = Chr <$> (delim *> (escapedChar <|> anyChar))
   where
     delim = char '\''
 
-parseString :: Parser Literal
-parseString
-  = LiString . pack <$> (delim *> inside)
+parseStr :: Parser Literal
+parseStr
+  = Str . pack <$> (delim *> inside)
   where
     delim  = char '"'
     inside = manyTill (escapedChar <|> anyChar) delim
 
-parseFloat :: Parser Literal
-parseFloat
-  = LiFloat <$> (build <$> integer <*> fraction <*> exponent)
+parseRat :: Parser Literal
+parseRat
+  = Rat <$> (build <$> integer <*> fraction <*> exponent)
   where
     integer  = signed decimal :: Parser Integer
     fraction = parse <$> (char '.' *> takeWhile isDigit)
@@ -91,21 +102,14 @@ parseFloat
     exponent = ((char 'e' <|> char 'E') *> integer) <|> pure 0
     build a b c = (fromIntegral a + b) * 10 ^^ c
 
-parseInteger :: Parser Literal
-parseInteger
+parseInt :: Parser Literal
+parseInt
   = bin <|> oct <|> hex <|> dec
   where
-    bin = flip LiInteger Binary      <$> signed ("0b" .*> binary)
-    oct = flip LiInteger Octal       <$> signed ("0o" .*> octal)
-    hex = flip LiInteger Hexadecimal <$> signed ("0x" .*> hexadecimal)
-    dec = flip LiInteger Decimal     <$> signed decimal
-
-parseBool :: Parser Literal
-parseBool
-  = LiBool <$> (true <|> false)
-  where
-    true  = "true"  .*> pure True
-    false = "false" .*> pure False
+    bin = Int Bin <$> signed ("0b" .*> binary)
+    oct = Int Oct <$> signed ("0o" .*> octal)
+    hex = Int Hex <$> signed ("0x" .*> hexadecimal)
+    dec = Int Dec <$> signed decimal
 
 escapedChar :: Parser Char
 escapedChar

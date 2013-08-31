@@ -3,25 +3,29 @@ module Language.Hee.Syntax
 
 import Data.Text
 
-data Expression a
-  = ExEmpty
-  | ExName a
-  | ExQuote (Expression a)
-  | ExCompose (Expression a) (Expression a)
-  | ExLiteral Literal
+data Bind a
+  = Non a (Expr a)
+  | Rec [(a, Expr a)]
+  deriving (Eq, Show)
+
+data Expr a
+  = Empty
+  | Name a
+  | Quote (Expr a)
+  | Compose (Expr a) (Expr a)
+  | Literal Literal
   deriving (Eq, Show)
 
 data Literal
-  = LiChar Char
-  | LiString Text
-  | LiInteger Integer Radix
-  | LiFloat Float
-  | LiBool Bool
+  = Chr Char
+  | Str Text
+  | Int Radix Integer
+  | Rat Rational
   deriving (Eq, Show)
 
 data Radix
-  = Binary
-  | Octal
-  | Decimal
-  | Hexadecimal
+  = Bin
+  | Oct
+  | Hex
+  | Dec
   deriving (Eq, Show)
