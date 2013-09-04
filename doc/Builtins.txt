@@ -1,0 +1,113 @@
+
+-- Char# 31-bit characters
+--   gtChar#    :: Char# -> Char# -> Bool
+--   geChar#    :: Char# -> Char# -> Bool
+--   eqChar#    :: Char# -> Char# -> Bool
+--   ltChar#    :: Char# -> Char# -> Bool
+--   leChar#    :: Char# -> Char# -> Bool
+--   charToInt# :: Char# -> Int#
+--
+-- Int# native-sized integers (30+ bits)
+--   gtInt#       :: Int# -> Int# -> Bool
+--   geInt#       :: Int# -> Int# -> Bool
+--   eqInt#       :: Int# -> Int# -> Bool
+--   neInt#       :: Int# -> Int# -> Bool
+--   ltInt#       :: Int# -> Int# -> Bool
+--   leInt#       :: Int# -> Int# -> Bool
+--   addInt#      :: Int# -> Int# -> Int#
+--   subInt#      :: Int# -> Int# -> Int#
+--   mulInt#      :: Int# -> Int# -> Int#
+--   remInt#      :: Int# -> Int# -> Int#
+--   divInt#      :: Int# -> Int# -> Int#
+--   negInt#      :: Int# -> Int#
+--   caddInt#     :: Int# -> Int# -> (Int#, Int#) -- add with carry
+--   csubInt#     :: Int# -> Int# -> (Int#, Int#) -- subtract with carry
+--   shiftLInt#   :: Int# -> Int# -> Int# -- shift left
+--   shiftRAInt#  :: Int# -> Int# -> Int# -- shift right arithmetic
+--   shiftRLInt#  :: Int# -> Int# -> Int# -- shift right logical
+--   intToChar#   :: Int# -> Char#
+--   intToWord#   :: Int# -> Word#
+--   intToFloat#  :: Int# -> Float#
+--   intToDouble# :: Int# -> Double#
+--
+-- Word# native-sized unsigned words
+--   gtWord#       :: Word# -> Word# -> Bool
+--   geWord#       :: Word# -> Word# -> Bool
+--   eqWord#       :: Word# -> Word# -> Bool
+--   neWord#       :: Word# -> Word# -> Bool
+--   ltWord#       :: Word# -> Word# -> Bool
+--   leWord#       :: Word# -> Word# -> Bool
+--   addWord#      :: Word# -> Word# -> Int#
+--   subWord#      :: Word# -> Word# -> Int#
+--   mulWord#      :: Word# -> Word# -> Int#
+--   remWord#      :: Word# -> Word# -> Int#
+--   divWord#      :: Word# -> Word# -> Int#
+--   andWord#      :: Word# -> Word# -> Word#
+--   orWord#       :: Word# -> Word# -> Word#
+--   xorWord#      :: Word# -> Word# -> Word#
+--   notWord#      :: Word# -> Word#
+--   shiftLWord#   :: Word# -> Int# -> Word# -- shift left
+--   shiftRLWord#  :: Word# -> Int# -> Word# -- shift right logical
+--   wordToChar#   :: Word# -> Char#
+--   wordToInt#    :: Word# -> Int#
+--   wordToFloat#  :: Word# -> Float#
+--   wordToDouble# :: Word# -> Double#
+--   
+-- Double# double-precision (64-bit) floating-point numbers
+--   gtDouble#       :: Double# -> Double# -> Bool
+--   geDouble#       :: Double# -> Double# -> Bool
+--   eqDouble#       :: Double# -> Double# -> Bool
+--   neDouble#       :: Double# -> Double# -> Bool
+--   ltDouble#       :: Double# -> Double# -> Bool
+--   leDouble#       :: Double# -> Double# -> Bool
+--   addDouble#      :: Double# -> Double# -> Double#
+--   subDouble#      :: Double# -> Double# -> Double#
+--   mulDouble#      :: Double# -> Double# -> Double#
+--   remDouble#      :: Double# -> Double# -> Double#
+--   divDouble#      :: Double# -> Double# -> Double#
+--   powDouble#      :: Double# -> Double# -> Double#
+--   negDouble#      :: Double# -> Double#
+--   expDouble#      :: Double# -> Double#
+--   logDouble#      :: Double# -> Double#
+--   sqrtDouble#     :: Double# -> Double#
+--   sinDouble#      :: Double# -> Double#
+--   cosDouble#      :: Double# -> Double#
+--   tanDouble#      :: Double# -> Double#
+--   asinDouble#     :: Double# -> Double#
+--   acosDouble#     :: Double# -> Double#
+--   atanDouble#     :: Double# -> Double#
+--   sinhDouble#     :: Double# -> Double#
+--   coshDouble#     :: Double# -> Double#
+--   tanhDouble#     :: Double# -> Double#
+--   doubleToInt#    :: Double# -> Int#
+--   doubleToFloat#  :: Double# -> Float#
+--   decodeDouble#   :: Double# -> (Bit#, Word#, Word#, Int#)
+--
+-- Float# single-precision (32-bit) floating-point numbers
+--   gtFloat#       :: Float# -> Float# -> Bool
+--   geFloat#       :: Float# -> Float# -> Bool
+--   eqFloat#       :: Float# -> Float# -> Bool
+--   neFloat#       :: Float# -> Float# -> Bool
+--   ltFloat#       :: Float# -> Float# -> Bool
+--   leFloat#       :: Float# -> Float# -> Bool
+--   addFloat#      :: Float# -> Float# -> Float#
+--   subFloat#      :: Float# -> Float# -> Float#
+--   mulFloat#      :: Float# -> Float# -> Float#
+--   remFloat#      :: Float# -> Float# -> Float#
+--   divFloat#      :: Float# -> Float# -> Float#
+--   powFloat#      :: Float# -> Float# -> Float#
+--   negFloat#      :: Float# -> Float#
+--   expFloat#      :: Float# -> Float#
+--   logFloat#      :: Float# -> Float#
+--   sqrtFloat#     :: Float# -> Float#
+--   sinFloat#      :: Float# -> Float#
+--   cosFloat#      :: Float# -> Float#
+--   tanFloat#      :: Float# -> Float#
+--   asinFloat#     :: Float# -> Float#
+--   acosFloat#     :: Float# -> Float#
+--   atanFloat#     :: Float# -> Float#
+--   sinhFloat#     :: Float# -> Float#
+--   coshFloat#     :: Float# -> Float#
+--   tanhFloat#     :: Float# -> Float#
+--   floatToInt#    :: Float# -> Int#
+--   decodeFloat#   :: Float# -> (Int#, Int#)

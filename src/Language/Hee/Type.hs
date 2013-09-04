@@ -53,13 +53,6 @@ data Constructor a
     }
   deriving (Eq, Show)
 
-arity :: Constructor a -> Int
-arity (Function {})             = 2
-arity (Algebraic { vars = v })  = length v
-arity (Tuple { vars = v })      = length v
-arity (Synonym { vars = v })    = length v
-arity (Primitive {})            = 0
-
 data Primitive
   = Void
   | Ptr
@@ -78,3 +71,10 @@ data Primitive
   | Double
   | Vector Int Primitive
   deriving (Eq, Show)
+
+arity :: Constructor a -> Int
+arity (Function {})             = 2
+arity (Algebraic { vars = v })  = length v
+arity (Tuple { vars = v })      = length v
+arity (Synonym { vars = v })    = length v
+arity (Primitive {})            = 0
