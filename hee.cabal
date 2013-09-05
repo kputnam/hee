@@ -26,6 +26,7 @@ library
     containers >= 0.4.0.0
 
   exposed-modules:
+    Language.Hee.Check
     Language.Hee.Syntax
     Language.Hee.Parser
     Language.Hee.Data

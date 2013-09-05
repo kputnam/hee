@@ -1,8 +1,15 @@
+{-# LANGUAGE TupleSections      #-}
+{-# LANGUAGE OverloadedStrings  #-}
+
 module Language.Hee.Check
   where
 
 import Language.Hee.Type
 import Language.Hee.Syntax
+
+import Data.Map
+import Data.Monoid
+import Control.Applicative
 
 data Constraint a
   = Unify (Type a) (Type a) -- two types should be unified
@@ -19,16 +26,25 @@ data Context a
     }
   deriving (Eq, Show)
 
-instance Monoid (Context a) where
+instance Ord a => Monoid (Context a) where
   mempty      = Context mempty mempty
   mappend a b = Context constraints' assumptions'
     where
       constraints' = constraints a `mappend` constraints b
       assumptions' = assumptions a `mappend` assumptions b
 
+freshVar :: Monad m => m (Type a)
+freshVar = return (Lit "F")
+
+tyChr, tyStr, tyInt, tyRat :: Type a
+tyChr = Lit "chr"
+tyStr = Lit "str"
+tyInt = Lit "int"
+tyRat = Lit "rat"
+
 -- Generalizing Hindley-Milner Type Inference Algorithms
 --   B. Heeren, J. Hage, D. Swierstra (2002)
-mkConstraints :: Monad m => Expr a -> m (Type, Context a)
+mkConstraints :: (Ord a, Applicative m, Monad m) => Expr a -> m (Type a, Context a)
 mkConstraints Empty
   -- The empty term has any type and doesn't add
   -- any new assumptions nor add new constraints
@@ -37,7 +53,7 @@ mkConstraints (Name a)
   -- Referencing an identifier just creates a fresh
   -- variable and adds it to the map of assumptions
   = f <$> freshVar
-  where f v = (v, Constraint mempty (singleton a [v])
+  where f v = (v, Context mempty (singleton a [v]))
 mkConstraints (Quote a)
   -- Quoting an expression promotes its type `ta` to
   -- the type `S -> S ta` where S is a fresh variable
@@ -57,7 +73,7 @@ mkConstraints (Compose a b)
        -- + Unify tb (varT -> varU)
        return undefined
 -- Literals do not produce assumptions or constraints
-mkConstraints (Literal (Chr _)) = pure (tyChr, mempty)
-mkConstraints (Literal (Str _)) = pure (tyStr, mempty)
-mkConstraints (Literal (Int _)) = pure (tyInt, mempty)
-mkConstraints (Literal (Rat _)) = pure (tyRat, mempty)
+mkConstraints (Literal (Chr _))   = pure (tyChr, mempty)
+mkConstraints (Literal (Str _))   = pure (tyStr, mempty)
+mkConstraints (Literal (Int _ _)) = pure (tyInt, mempty)
+mkConstraints (Literal (Rat _))   = pure (tyRat, mempty)
