@@ -7,9 +7,13 @@ module Language.Hee.Check
 import Language.Hee.Type
 import Language.Hee.Syntax
 
-import Data.Map
-import Data.Monoid
 import Control.Applicative
+import Control.Monad.State
+import Data.Text (Text)
+import Data.Monoid
+import Data.Map
+
+import qualified Data.Text as T
 
 data Constraint a
   = Unify (Type a) (Type a) -- two types should be unified
@@ -27,24 +31,28 @@ data Context a
   deriving (Eq, Show)
 
 instance Ord a => Monoid (Context a) where
-  mempty      = Context mempty mempty
-  mappend a b = Context constraints' assumptions'
+  mempty
+    = Context mempty mempty
+
+  mappend a b
+    = Context constraints' assumptions'
     where
-      constraints' = constraints a `mappend` constraints b
-      assumptions' = assumptions a `mappend` assumptions b
+      constraints' = constraints a <> constraints b
+      assumptions' = assumptions a <> assumptions b
 
-freshVar :: Monad m => m (Type a)
-freshVar = return (Lit "F")
-
-tyChr, tyStr, tyInt, tyRat :: Type a
-tyChr = Lit "chr"
-tyStr = Lit "str"
-tyInt = Lit "int"
-tyRat = Lit "rat"
+freshVar :: State Int (Type Text)
+freshVar
+  = do n <- get
+       modify succ
+       return . Var $ letter n `T.cons` ticks n
+  where
+    alphabet = "abcdefghijklmnopqurstuvwxyz"
+    letter n = alphabet !! (n `rem`  length alphabet)
+    ticks  n = T.replicate (n `quot` length alphabet) "'"
 
 -- Generalizing Hindley-Milner Type Inference Algorithms
 --   B. Heeren, J. Hage, D. Swierstra (2002)
-mkConstraints :: (Ord a, Applicative m, Monad m) => Expr a -> m (Type a, Context a)
+mkConstraints :: Expr Text -> State Int (Type Text, Context Text)
 mkConstraints Empty
   -- The empty term has any type and doesn't add
   -- any new assumptions nor add new constraints
@@ -53,13 +61,14 @@ mkConstraints (Name a)
   -- Referencing an identifier just creates a fresh
   -- variable and adds it to the map of assumptions
   = f <$> freshVar
-  where f v = (v, Context mempty (singleton a [v]))
+  where
+    f v = (v, Context mempty (singleton a [v]))
 mkConstraints (Quote a)
   -- Quoting an expression promotes its type `ta` to
   -- the type `S -> S ta` where S is a fresh variable
   = do var       <- freshVar
        (ta, ca)  <- mkConstraints a
-       return (undefined, ca)
+       return (var `tyFun` (var `tyStack` ta), ca)
 mkConstraints (Compose a b)
   -- Composing two terms yields `S -> U` if the first
   -- term unifies with `S -> T` and the second `T -> U`.
@@ -68,12 +77,52 @@ mkConstraints (Compose a b)
        varU      <- freshVar
        (ta, ca)  <- mkConstraints a
        (tb, cb)  <- mkConstraints b
-       -- varS -> varU
-       -- + Unify ta (varS -> varT)
-       -- + Unify tb (varT -> varU)
-       return undefined
--- Literals do not produce assumptions or constraints
-mkConstraints (Literal (Chr _))   = pure (tyChr, mempty)
-mkConstraints (Literal (Str _))   = pure (tyStr, mempty)
-mkConstraints (Literal (Int _ _)) = pure (tyInt, mempty)
-mkConstraints (Literal (Rat _))   = pure (tyRat, mempty)
+       let cc = Context [ Unify ta (varS `tyFun` varT)
+                        , Unify tb (varT `tyFun` varU) ] mempty
+       return (varS `tyFun` varU, ca <> cb <> cc)
+mkConstraints (Literal (Chr _))
+  = do var <- freshVar
+       return (var `tyFun` (var `tyStack` tyChr), mempty)
+mkConstraints (Literal (Str _))
+  = do var <- freshVar
+       return (var `tyFun` (var `tyStack` tyStr), mempty)
+mkConstraints (Literal (Int _ _))
+  = do var <- freshVar
+       return (var `tyFun` (var `tyStack` tyInt), mempty)
+mkConstraints (Literal (Rat _))
+  = do var <- freshVar
+       return (var `tyFun` (var `tyStack` tyRat), mempty)
+
+------------------------------------------------------------------------------
+
+-- Types for literal values
+tyChr, tyStr, tyInt, tyRat :: Type a
+tyChr = Lit "chr"
+tyStr = Lit "str"
+tyInt = Lit "int"
+tyRat = Lit "rat"
+
+-- Type of function from first arg to second
+tyFun :: Type a -> Type a -> Type a
+tyFun domain codomain
+  = App (App tcFun domain) codomain
+  where
+    -- Type constructor for functions
+    tcFun :: Type a
+    tcFun
+      = Con $ Function "->" (Lit "* -> * -> *")
+
+-- Type of non-empty stack with second arg pushed onto the first
+tyStack :: Type Text -> Type Text -> Type Text
+tyStack rest top
+  = App (App tcPair rest) top
+  where
+    -- Type constructor for non-empty stack
+    tcPair :: Type Text
+    tcPair
+      = Con $ Algebraic "*" (Lit "* -> * -> *") ["S", "a"] []
+
+-- Type of empty stack
+tyEmpty :: Type Text
+tyEmpty
+  = Lit "%"

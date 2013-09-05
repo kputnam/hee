@@ -4,13 +4,13 @@ module Language.Hee.Type
   , Sort
   , Constructor(..)
   , Primitive(..)
-  , arity
   ) where
 
 import Data.Text (Text)
 
 import {-# SOURCE #-} Language.Hee.Data
 
+-- Parameterized over variable type
 data Type a
   = Con (Constructor a)   -- type constructor
   | Lit Name              -- type literal
@@ -23,6 +23,7 @@ type Kind = Type
 type Sort = Type
 type Name = Text
 
+-- Parameterized over variable type
 data Constructor a
   = Function -- The function type constructor (->)
     { name  :: Name
@@ -71,10 +72,3 @@ data Primitive
   | Double
   | Vector Int Primitive
   deriving (Eq, Show)
-
-arity :: Constructor a -> Int
-arity (Function {})             = 2
-arity (Algebraic { vars = v })  = length v
-arity (Tuple { vars = v })      = length v
-arity (Synonym { vars = v })    = length v
-arity (Primitive {})            = 0

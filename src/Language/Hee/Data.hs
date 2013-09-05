@@ -10,7 +10,7 @@ type Tag  = Int
 type Name = Text
 
 data Variant a
-  = Data
+  = Variant
     { name    :: Name
     , tag     :: Tag
     , args    :: [Type a]
