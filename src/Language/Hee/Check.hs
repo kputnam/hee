@@ -37,8 +37,8 @@ instance Ord a => Monoid (Context a) where
   mappend a b
     = Context constraints' assumptions'
     where
-      constraints' = constraints a <> constraints b
-      assumptions' = assumptions a <> assumptions b
+      constraints' = mappend (constraints a) (constraints b)
+      assumptions' = unionWith (++) (assumptions a) (assumptions b)
 
 freshVar :: State Int (Type Text)
 freshVar
@@ -66,33 +66,34 @@ mkConstraints (Name a)
 mkConstraints (Quote a)
   -- Quoting an expression promotes its type `ta` to
   -- the type `S -> S ta` where S is a fresh variable
-  = do var       <- freshVar
-       (ta, ca)  <- mkConstraints a
-       return (var `tyFun` (var `tyStack` ta), ca)
+  = do s        <- freshVar
+       (ta, ca) <- mkConstraints a
+       return (s `tyFun` (s `tyStack` ta), ca)
 mkConstraints (Compose a b)
   -- Composing two terms yields `S -> U` if the first
   -- term unifies with `S -> T` and the second `T -> U`.
-  = do varS      <- freshVar
-       varT      <- freshVar
-       varU      <- freshVar
-       (ta, ca)  <- mkConstraints a
-       (tb, cb)  <- mkConstraints b
-       let cc = Context [ Unify ta (varS `tyFun` varT)
-                        , Unify tb (varT `tyFun` varU) ] mempty
-       return (varS `tyFun` varU, ca <> cb <> cc)
+  = do s        <- freshVar
+       t        <- freshVar
+       u        <- freshVar
+       (ta, ca) <- mkConstraints a
+       (tb, cb) <- mkConstraints b
+       let cc    = Context [ Unify ta (s `tyFun` t)
+                           , Unify tb (t `tyFun` u) ] mempty
+       return (s `tyFun` u, ca <> cb <> cc)
 mkConstraints (Literal (Chr _))
-  = do var <- freshVar
-       return (var `tyFun` (var `tyStack` tyChr), mempty)
+  = pushType tyChr <$> freshVar
 mkConstraints (Literal (Str _))
-  = do var <- freshVar
-       return (var `tyFun` (var `tyStack` tyStr), mempty)
+  = pushType tyStr <$> freshVar
 mkConstraints (Literal (Int _ _))
-  = do var <- freshVar
-       return (var `tyFun` (var `tyStack` tyInt), mempty)
+  = pushType tyInt <$> freshVar
 mkConstraints (Literal (Rat _))
-  = do var <- freshVar
-       return (var `tyFun` (var `tyStack` tyRat), mempty)
+  = pushType tyRat <$> freshVar
 
+pushType :: Type Text -> Type Text -> (Type Text, Context Text)
+pushType t rest
+  = (rest `tyFun` (rest `tyStack` t), mempty)
+
+-- Built-in types and type constructors
 ------------------------------------------------------------------------------
 
 -- Types for literal values
