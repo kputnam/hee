@@ -1,4 +1,4 @@
-module Language.Hee.Type
+module Hee.Syntax.Type
   ( Type(..)
   , Kind
   , Sort
@@ -8,7 +8,7 @@ module Language.Hee.Type
 
 import Data.Text (Text)
 
-import {-# SOURCE #-} Language.Hee.Data
+import {-# SOURCE #-} Hee.Data
 
 -- Parameterized over variable type
 data Type a

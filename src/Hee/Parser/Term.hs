@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.Hee.Parser
-  ( parseExpr
+module Hee.Parser.Term
+  ( parseTerm
   , parseFile
   ) where
 
@@ -14,19 +14,19 @@ import Data.Char (isOctDigit, isDigit, chr, ord)
 import Data.Text (Text, cons, pack, foldl', length)
 import Data.Attoparsec.Text hiding (parse)
 
-parseFile :: Parser (Bind Text)
-parseFile
-  = Rec <$> many1 parseBind
+-- parseFile :: Parser (Bind Text)
+-- parseFile
+--   = Rec <$> many1 parseBind
+-- 
+-- parseBind :: Parser (Text, Expr Text)
+-- parseBind
+--   = (,) <$> name <*> body
+--   where
+--     name = optional flushLine  *> parseNameId
+--     body = indentLine *> "= " .*> parseTerm
 
-parseBind :: Parser (Text, Expr Text)
-parseBind
-  = (,) <$> name <*> body
-  where
-    name = optional flushLine  *> parseNameId
-    body = indentLine *> "= " .*> parseExpr
-
-parseExpr :: Parser (Expr Text)
-parseExpr
+parseTerm :: Parser (Expr Text)
+parseTerm
   = pruneExpr <$> (skipSpace *> loop)
   where
     loop = Compose <$> expr <*> (indentLine *> loop <|> parseEmpty)
@@ -66,7 +66,7 @@ parseQuote
   where
     open   = char '[' *> skipSpace
     close  = skipSpace <* char ']'
-    inside = Quote <$> parseExpr
+    inside = Quote <$> parseTerm
 
 parseLiteral :: Parser (Expr Text)
 parseLiteral
