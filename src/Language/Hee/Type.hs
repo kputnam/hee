@@ -12,16 +12,21 @@ import {-# SOURCE #-} Language.Hee.Data
 
 -- Parameterized over variable type
 data Type a
-  = Con (Constructor a)   -- type constructor
-  | Lit Name              -- type literal
-  | Var a                 -- type variable
-  | Lam a (Type a)        -- polymorphic type
-  | App (Type a) (Type a) -- constructor application
+  = Con (Constructor a)   -- K      type constructor
+  | Var a                 -- α      type variable
+  | Lam a (Type a)        -- ∀α:κ.γ polymorphic type
+  | App (Type a) (Type a) -- τ τ    constructor application
   deriving (Eq, Show)
 
 type Kind = Type
 type Sort = Type
 type Name = Text
+
+data Var a
+  = TermV Name (Type a) -- term variable (not used)
+  | TypeV Name (Kind a) -- type variable
+  | KindV Name (Sort a) -- kind variable
+  deriving (Eq, Show)
 
 -- Parameterized over variable type
 data Constructor a
