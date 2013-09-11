@@ -4,7 +4,7 @@ module Hee.Data
   ) where
 
 import Data.Text (Text)
-import Language.Hee.Type
+import Hee.Syntax.Type
 
 type Tag  = Int
 type Name = Text

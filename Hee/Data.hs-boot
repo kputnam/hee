@@ -1,4 +1,4 @@
-module Language.Hee.Data
+module Hee.Data
   where
 
 data Variant a

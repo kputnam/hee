@@ -2,10 +2,7 @@
 
 module Hee.Parser.Term
   ( parseTerm
-  , parseFile
   ) where
-
-import Language.Hee.Syntax
 
 import Prelude hiding (takeWhile, length, exponent)
 import Control.Applicative hiding (empty)
@@ -14,28 +11,31 @@ import Data.Char (isOctDigit, isDigit, chr, ord)
 import Data.Text (Text, cons, pack, foldl', length)
 import Data.Attoparsec.Text hiding (parse)
 
+import Hee.Syntax.Term
+import Hee.Syntax.Literal
+
 -- parseFile :: Parser (Bind Text)
 -- parseFile
 --   = Rec <$> many1 parseBind
 -- 
--- parseBind :: Parser (Text, Expr Text)
+-- parseBind :: Parser (Text, Term Text)
 -- parseBind
 --   = (,) <$> name <*> body
 --   where
 --     name = optional flushLine  *> parseNameId
 --     body = indentLine *> "= " .*> parseTerm
 
-parseTerm :: Parser (Expr Text)
+parseTerm :: Parser (Term Text)
 parseTerm
   = pruneExpr <$> (skipSpace *> loop)
   where
-    loop = Compose <$> expr <*> (indentLine *> loop <|> parseEmpty)
-    expr = parseQuote
+    loop = Compose <$> term <*> (indentLine *> loop <|> parseEmpty)
+    term = parseQuote
        <|> parseLiteral
        <|> parseName
        <|> parseEmpty
 
-pruneExpr :: Expr a -> Expr a
+pruneExpr :: Term a -> Term a
 pruneExpr (Quote e)     = Quote (pruneExpr e)
 pruneExpr (Compose a b) = compose (pruneExpr a) (pruneExpr b)
   where
@@ -45,11 +45,11 @@ pruneExpr (Compose a b) = compose (pruneExpr a) (pruneExpr b)
     compose m n             = Compose m n
 pruneExpr e               = e
 
-parseEmpty :: Parser (Expr Text)
+parseEmpty :: Parser (Term Text)
 parseEmpty
   = pure Empty
 
-parseName :: Parser (Expr Text)
+parseName :: Parser (Term Text)
 parseName
   = Name <$> parseNameId
 
@@ -60,7 +60,7 @@ parseNameId
     startChar = notInClass " \t\r\n\f\v[]\"'"
     otherChar = notInClass " \t\r\n\f\v[]"
 
-parseQuote :: Parser (Expr Text)
+parseQuote :: Parser (Term Text)
 parseQuote
   = parenthesized open inside close
   where
@@ -68,7 +68,7 @@ parseQuote
     close  = skipSpace <* char ']'
     inside = Quote <$> parseTerm
 
-parseLiteral :: Parser (Expr Text)
+parseLiteral :: Parser (Term Text)
 parseLiteral
   = Literal <$> literal
   where
@@ -79,20 +79,20 @@ parseLiteral
 
 parseChr :: Parser Literal
 parseChr
-  = Chr <$> (delim *> (escapedChar <|> anyChar))
+  = Char <$> (delim *> (escapedChar <|> anyChar))
   where
     delim = char '\''
 
 parseStr :: Parser Literal
 parseStr
-  = Str . pack <$> (delim *> inside)
+  = String . pack <$> (delim *> inside)
   where
     delim  = char '"'
     inside = manyTill (escapedChar <|> anyChar) delim
 
 parseRat :: Parser Literal
 parseRat
-  = Rat <$> (build <$> integer <*> fraction <*> exponent)
+  = Float <$> (build <$> integer <*> fraction <*> exponent)
   where
     integer  = signed decimal :: Parser Integer
     fraction = parse <$> (char '.' *> takeWhile isDigit)
@@ -106,10 +106,10 @@ parseInt :: Parser Literal
 parseInt
   = bin <|> oct <|> hex <|> dec
   where
-    bin = Int Bin <$> signed ("0b" .*> binary)
-    oct = Int Oct <$> signed ("0o" .*> octal)
-    hex = Int Hex <$> signed ("0x" .*> hexadecimal)
-    dec = Int Dec <$> signed decimal
+    bin = Integer <$> signed ("0b" .*> binary)
+    oct = Integer <$> signed ("0o" .*> octal)
+    hex = Integer <$> signed ("0x" .*> hexadecimal)
+    dec = Integer <$> signed decimal
 
 escapedChar :: Parser Char
 escapedChar
@@ -152,12 +152,12 @@ isVerticalSpace :: Char -> Bool
 isVerticalSpace c = c == '\n' || c == '\r'
 
 -- Consume whitespace such that the following text begins flush with a new line
-flushLine :: Parser ()
-flushLine
-  =   takeWhile1 isVerticalSpace   *> flushLine'
-  <|> takeWhile1 isHorizontalSpace *> flushLine
-  where
-    flushLine' = flushLine <|> pure ()
+-- flushLine :: Parser ()
+-- flushLine
+--   =   takeWhile1 isVerticalSpace   *> flushLine'
+--   <|> takeWhile1 isHorizontalSpace *> flushLine
+--   where
+--     flushLine' = flushLine <|> pure ()
 
 -- Consume whitespace such that the following text is not flush with a new line
 indentLine :: Parser ()

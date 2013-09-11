@@ -1,19 +1,19 @@
 {-# LANGUAGE TupleSections      #-}
 {-# LANGUAGE OverloadedStrings  #-}
 
-module Language.Hee.Check
+module Hee.Inference.Constraint
   where
-
-import Language.Hee.Type
-import Language.Hee.Syntax
 
 import Control.Applicative
 import Control.Monad.State
 import Data.Text (Text)
 import Data.Monoid
 import Data.Map
-
 import qualified Data.Text as T
+
+import Hee.Syntax.Type    as T
+import Hee.Syntax.Term    as E
+import Hee.Syntax.Literal as L
 
 data Constraint a
   = Unify (Type a) (Type a) -- two types should be unified
@@ -52,8 +52,8 @@ freshVar
 
 -- Generalizing Hindley-Milner Type Inference Algorithms
 --   B. Heeren, J. Hage, D. Swierstra (2002)
-mkConstraints :: Expr Text -> State Int (Type Text, Context Text)
-mkConstraints Empty
+mkConstraints :: Term Text -> State Int (Type Text, Context Text)
+mkConstraints E.Empty
   -- The empty term has any type and doesn't add
   -- any new assumptions nor add new constraints
   = (, mempty) <$> freshVar
@@ -80,14 +80,18 @@ mkConstraints (Compose a b)
        let cc    = Context [ Unify ta (s `tyFun` t)
                            , Unify tb (t `tyFun` u) ] mempty
        return (s `tyFun` u, ca <> cb <> cc)
-mkConstraints (Literal (Chr _))
-  = pushType tyChr <$> freshVar
-mkConstraints (Literal (Str _))
-  = pushType tyStr <$> freshVar
-mkConstraints (Literal (Int _ _))
-  = pushType tyInt <$> freshVar
-mkConstraints (Literal (Rat _))
-  = pushType tyRat <$> freshVar
+mkConstraints (Literal x)
+  = pushType (Con (litType x)) <$> freshVar
+  where
+    litType (L.Byte    _) = Primitive { name = "byte"   , kind = undefined, prim = T.Word8  }
+    litType (L.Short   _) = Primitive { name = "short"  , kind = undefined, prim = T.Word16 }
+    litType (L.Word    _) = Primitive { name = "word"   , kind = undefined, prim = T.Word32 }
+    litType (L.Long    _) = Primitive { name = "long"   , kind = undefined, prim = T.Word64 }
+    litType (L.Float   _) = Primitive { name = "float"  , kind = undefined, prim = T.Float  }
+    litType (L.Double  _) = Primitive { name = "double" , kind = undefined, prim = T.Double }
+    litType (L.Integer _) = error "todo"
+    litType (L.String  _) = error "todo"
+    litType (L.Char    _) = error "todo"
 
 pushType :: Type Text -> Type Text -> (Type Text, Context Text)
 pushType t rest
@@ -95,13 +99,6 @@ pushType t rest
 
 -- Built-in types and type constructors
 ------------------------------------------------------------------------------
-
--- Types for literal values
-tyChr, tyStr, tyInt, tyRat :: Type a
-tyChr = Lit "chr"
-tyStr = Lit "str"
-tyInt = Lit "int"
-tyRat = Lit "rat"
 
 -- Type of function from first arg to second
 tyFun :: Type a -> Type a -> Type a
@@ -111,19 +108,14 @@ tyFun domain codomain
     -- Type constructor for functions
     tcFun :: Type a
     tcFun
-      = Con $ Function "->" (Lit "* -> * -> *")
+      = Con $ Function "->" undefined
 
 -- Type of non-empty stack with second arg pushed onto the first
-tyStack :: Type Text -> Type Text -> Type Text
-tyStack rest top
-  = App (App tcPair rest) top
-  where
-    -- Type constructor for non-empty stack
-    tcPair :: Type Text
-    tcPair
-      = Con $ Algebraic "*" (Lit "* -> * -> *") ["S", "a"] []
+tyStack :: Type a -> Type a -> Type a
+tyStack bottom top
+  = App (App (Con (Push { name = ":", kind = undefined })) bottom) top
 
 -- Type of empty stack
-tyEmpty :: Type Text
+tyEmpty :: Type a
 tyEmpty
-  = Lit "%"
+  = Con (T.Empty { name = "$", kind = undefined })
