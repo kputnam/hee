@@ -22,7 +22,7 @@ data Type b a
 data Constructor b a
   = Function  -- The function type constructor
     { name  :: Text   -- (->)
-    , kind  :: Kind   -- * -> * -> *
+    , kind  :: Kind   -- ρ -> ρ -> ρ
     , arity :: Int    -- 2
     }
   | Empty     -- Type constructor for an empty stack

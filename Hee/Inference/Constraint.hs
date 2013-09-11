@@ -41,7 +41,8 @@ instance Ord b => Monoid (Context b a) where
       constraints' = mappend (constraints a) (constraints b)
       assumptions' = unionWith (++) (assumptions a) (assumptions b)
 
-freshVar :: State Int (Type Int Text)
+-- Generate a fresh and free type variable
+freshVar :: State Int (Type a Text)
 freshVar
   = do n <- get
        modify succ
@@ -94,12 +95,11 @@ mkConstraints (Literal x)
     litType (L.String  _) = error "todo"
     litType (L.Char    _) = error "todo"
 
+-- Built-in types and type constructors
+------------------------------------------------------------------------------
 pushType :: Type Int Text -> Type Int Text -> (Type Int Text, Context Int Text)
 pushType t rest
   = (rest `tyFun` (rest `tyStack` t), mempty)
-
--- Built-in types and type constructors
-------------------------------------------------------------------------------
 
 -- Type of function from first arg to second
 tyFun :: Type b a -> Type b a -> Type b a
@@ -109,12 +109,12 @@ tyFun domain codomain
     -- Type constructor for functions
     tcFun :: Type b a
     tcFun
-      = Con $ Function "->" (Arr Rho Rho) 2
+      = Con $ Function "->" (Arr Rho (Arr Rho Rho)) 2
 
 -- Type of non-empty stack with second arg pushed onto the first
 tyStack :: Type b a -> Type b a -> Type b a
 tyStack bottom top
-  = App (App (Con (Push { name = ":", kind = Arr Rho Star, arity = 2 })) bottom) top
+  = App (App (Con (Push { name = ":", kind = Arr Rho (Arr Star Rho), arity = 2 })) bottom) top
 
 -- Type of empty stack
 tyEmpty :: Type b a

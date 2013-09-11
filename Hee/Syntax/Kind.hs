@@ -1,14 +1,9 @@
 module Hee.Syntax.Kind
   where
 
--- There is no binder for vars?
-data Kind -- a
-  -- = Var a
-  -- | Arr (Kind a) (Kind a)
+data Kind
   = Arr Kind Kind
-  | Rho
-  | Star
+  | Rho             -- ρ classifies stacks (similar to polymorphic row)
+  | Star            -- * classifies types
   | Constraint
   deriving (Show, Eq)
-
-
