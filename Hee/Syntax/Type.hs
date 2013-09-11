@@ -1,68 +1,56 @@
 module Hee.Syntax.Type
   ( Type(..)
-  , Kind
-  , Sort
-  , Constructor(..)
   , Primitive(..)
+  , Constructor(..)
   ) where
 
 import Data.Text (Text)
 
-import {-# SOURCE #-} Hee.Data
+import {-# SOURCE #-} qualified Hee.Syntax.Data as D
+import Hee.Syntax.Kind
 
--- Parameterized over variable type
-data Type a
-  = Con (Constructor a)   -- K      type constructor
-  | Var a                 -- α      type variable
-  | All a (Type a)        -- ∀α:κ.γ polymorphic type
-  | App (Type a) (Type a) -- τ τ    type application
+-- Types indexed by bound and free identifier types
+data Type b a
+  = Con (Constructor b a)     -- K      type constructor
+  | Var a                     -- α      free type variable
+  | Bnd b                     --        bound type variable
+  | All b (Type b a)          -- ∀α:κ.γ polymorphic type
+  | App (Type b a) (Type b a) -- τ τ    type application
   deriving (Eq, Show)
 
-type Kind = Type
-type Sort = Type
-type Name = Text
-
-data Var a
-  = TermV Name (Type a) -- term variable (not used)
-  | TypeV Name (Kind a) -- type variable
-  | KindV Name (Sort a) -- kind variable
-  deriving (Eq, Show)
-
--- Parameterized over variable type
-data Constructor a
-  = Function  -- The function type constructor (->)
-    { name  :: Name
-    , kind  :: Kind a
+-- Type constructors parameterized over bound and free identifier types
+data Constructor b a
+  = Function  -- The function type constructor
+    { name  :: Text   -- (->)
+    , kind  :: Kind   -- * -> * -> *
+    , arity :: Int    -- 2
     }
-  | Empty     -- Type constructor for an empty stack ($)
-    { name  :: Name
-    , kind  :: Kind a
+  | Empty     -- Type constructor for an empty stack
+    { name  :: Text   -- $
+    , kind  :: Kind   -- ρ
+    , arity :: Int    -- 0
     }
   | Push      -- Type constructor for a non-empty stack
-    { name  :: Name
-    , kind  :: Kind a
+    { name  :: Text
+    , kind  :: Kind   -- ρ -> * -> ρ
+    , arity :: Int    -- 2
     }
   | Tuple     -- Infinite family of tuple type constructors: (), (a), (a,b), etc
-    { name  :: Name
-    , kind  :: Kind a
-    , vars  :: [a]
-    , con   :: Variant a -- corresponding data constructor
+    { name  :: Text
+    , kind  :: Kind
+    , arity :: Int
+    , cons  :: D.Constructor b a -- corresponding data constructor
     }
   | Algebraic -- Algebraic type constructors
-    { name  :: Name
-    , kind  :: Kind a
-    , vars  :: [a]          -- kind and type vars used in the type constructor
-    , cases :: [Variant a]  -- information about the data constructors of this type
-    }
-  | Synonym   -- Type synonyms
-    { name  :: Name
-    , kind  :: Kind a
-    , vars  :: [a]            -- bound vars
-    , rhs   :: Constructor a  -- expansion of the synonym
+    { name  :: Text
+    , kind  :: Kind
+    , arity :: Int
+    , cases :: [D.Constructor b a]
     }
   | Primitive -- Primitive types cannot be defined within Hee (e.g., int)
-    { name  :: Name
-    , kind  :: Kind a
+    { name  :: Text
+    , kind  :: Kind
+    , arity :: Int
     , prim  :: Primitive
     }
   deriving (Eq, Show)

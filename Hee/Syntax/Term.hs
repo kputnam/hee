@@ -3,11 +3,14 @@ module Hee.Syntax.Term
 
 import Hee.Syntax.Literal
 
-data Bind a
-  = Non a (Term a)
-  | Rec [(a, Term a)]
-  deriving (Eq, Show)
-
+-- Terms indexed by identifier type. There are no binders within
+-- the term language, but each module defines top-level bindings
+-- that can be imported into other modules.
+--
+-- The parser will construct @Term Text@ values which contain only
+-- names of referenced identifiers. In a later phase, these @Text@
+-- names are resolved to unique identifiers which carry types and
+-- other information.
 data Term a
   = Empty
   | Name a
